@@ -1,0 +1,10 @@
+#!/bin/bash
+set -e
+
+SUDOERS_FILE="/etc/sudoers.d/i2p-emulator"
+
+echo "  Removing i2p-emulator sudoers rule..."
+rm -f "${SUDOERS_FILE}"
+echo "  Done."
+
+exit 0

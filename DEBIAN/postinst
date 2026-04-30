@@ -1,0 +1,142 @@
+#!/bin/bash
+set -e
+
+# =============================================================================
+# i2p-emulator postinst
+# Runs as root after package files are written to disk.
+# =============================================================================
+
+INSTALL_DIR="/opt/i2p-emulator"
+SUDOERS_FILE="/etc/sudoers.d/i2p-emulator"
+
+echo ""
+echo "┌─────────────────────────────────────────────────────┐"
+echo "│        I2P Testnet Emulator — Post-Install          │"
+echo "└─────────────────────────────────────────────────────┘"
+echo ""
+
+# ── 1. Make scripts executable ───────────────────────────────────────────────
+echo "  [1/6] Setting script permissions..."
+chmod 755 "${INSTALL_DIR}/setup-i2p-emulator.sh"
+chmod 644 "${INSTALL_DIR}/working-gui.py"
+chmod 644 "${INSTALL_DIR}/topology_model.py"
+chmod 644 "${INSTALL_DIR}/phase5_backend.py"
+chmod 644 "${INSTALL_DIR}/topology.sample.json"
+chmod 644 "${INSTALL_DIR}/topology.public-any-location.template.json"
+for f in "${INSTALL_DIR}"/run_phase5*.py \
+          "${INSTALL_DIR}"/import_java_authoritative_truth.py \
+          "${INSTALL_DIR}"/export_*.py \
+          "${INSTALL_DIR}"/build_topology_manifest.py; do
+    [ -f "$f" ] && chmod 644 "$f"
+done
+chmod 755 /usr/bin/i2p-emulator
+echo "      Done."
+
+# ── 2. Pre-compile Python bytecode ───────────────────────────────────────────
+# This is the single most important startup optimisation.
+# Python parses .py source on every launch unless .pyc cache files exist.
+# The main GUI file is ~19,000 lines — parsing it cold adds 10-20s on a VM.
+# Compiling once at install time drops subsequent startup to ~2-3s.
+echo "  [2/6] Pre-compiling Python bytecode (startup optimisation)..."
+PYTHON3=$(command -v python3 || true)
+if [ -n "${PYTHON3}" ]; then
+    "${PYTHON3}" -m compileall -q -j 0 "${INSTALL_DIR}" 2>/dev/null && \
+        echo "      Bytecode compiled." || \
+        echo "      Warning: bytecode compilation failed — startup may be slower."
+else
+    echo "      Warning: python3 not found, skipping bytecode compilation."
+fi
+
+# ── 3. Install Python dependencies via pip ───────────────────────────────────
+echo "  [3/6] Installing Python dependencies (pycountry, countryinfo)..."
+if command -v pip3 &>/dev/null; then
+    pip3 install --quiet --break-system-packages pycountry countryinfo 2>/dev/null || \
+    pip3 install --quiet pycountry countryinfo 2>/dev/null || \
+    echo "      Warning: pip install failed — optional location features may be limited."
+else
+    echo "      Warning: pip3 not found — skipping optional Python packages."
+fi
+echo "      Done."
+
+# ── 4. Install sudoers rule ───────────────────────────────────────────────────
+echo "  [4/6] Installing sudoers rule..."
+cat > "${SUDOERS_FILE}" << 'SUDOERS_EOF'
+# i2p-emulator sudoers rule
+# Installed by the i2p-emulator package.
+# Allows the GUI to manage network namespaces, run the deploy script,
+# and control I2P testnet systemd services without password prompts.
+# To revoke: sudo rm /etc/sudoers.d/i2p-emulator
+
+# The deploy script (runs as root; SUDO_USER tracks the original user)
+Cmnd_Alias I2P_SETUP = /opt/i2p-emulator/setup-i2p-emulator.sh
+
+# Network namespace and bridge management
+Cmnd_Alias I2P_NET = /sbin/ip, /usr/sbin/ip, /bin/ip, /usr/bin/ip
+
+# Systemd service control
+Cmnd_Alias I2P_SYSD = /bin/systemctl, /usr/bin/systemctl
+
+# Process management for router cleanup
+Cmnd_Alias I2P_PROC = /bin/pkill, /usr/bin/pkill
+
+# Port cleanup
+Cmnd_Alias I2P_FUSER = /bin/fuser, /usr/bin/fuser
+
+# File ownership and testnet directory cleanup
+Cmnd_Alias I2P_FS = /bin/chown, /usr/bin/chown, /bin/rm, /usr/bin/rm
+
+ALL ALL=(root) NOPASSWD: I2P_SETUP, I2P_NET, I2P_SYSD, I2P_PROC, I2P_FUSER, I2P_FS
+SUDOERS_EOF
+
+chmod 440 "${SUDOERS_FILE}"
+
+if command -v visudo &>/dev/null; then
+    if ! visudo -c -f "${SUDOERS_FILE}" >/dev/null 2>&1; then
+        echo "      ERROR: sudoers validation failed — removing rule."
+        rm -f "${SUDOERS_FILE}"
+        echo "      GUI will still work but will prompt for password on privileged operations."
+    else
+        echo "      Sudoers rule installed and validated."
+    fi
+fi
+echo "      Done."
+
+# ── 5. Register desktop entry and icon ───────────────────────────────────────
+echo "  [5/6] Updating application menu..."
+if command -v update-desktop-database &>/dev/null; then
+    update-desktop-database /usr/share/applications/ 2>/dev/null || true
+fi
+if command -v gtk-update-icon-cache &>/dev/null; then
+    gtk-update-icon-cache -f /usr/share/icons/hicolor/ 2>/dev/null || true
+fi
+echo "      Done."
+
+# ── 6. Font cache warmup (prevents first-launch font stutter) ────────────────
+echo "  [6/6] Warming Qt font cache..."
+# Run a trivial PyQt5 import to trigger font cache creation at install time,
+# not at first user launch. Timeout after 10s to avoid hanging the install.
+if command -v python3 &>/dev/null && python3 -c "import PyQt5" 2>/dev/null; then
+    timeout 10 python3 -c "
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtGui import QFont, QFontDatabase
+import sys, os
+os.environ['QT_QPA_PLATFORM'] = 'offscreen'
+os.environ['QT_LOGGING_RULES'] = '*=false'
+app = QApplication(sys.argv)
+db = QFontDatabase()
+" 2>/dev/null && echo "      Font cache warmed." || echo "      Font cache warmup skipped (non-critical)."
+else
+    echo "      PyQt5 not importable yet — font cache will build on first launch."
+fi
+
+echo ""
+echo "  ✓  I2P Testnet Emulator installed successfully."
+echo ""
+echo "  Launch:  Applications menu  →  I2P Testnet Emulator"
+echo "           — or — terminal:   i2p-emulator"
+echo ""
+echo "  First deploy: the setup script downloads the I2P router jar (~30 MB)."
+echo "  An internet connection is required for the initial deployment only."
+echo ""
+
+exit 0

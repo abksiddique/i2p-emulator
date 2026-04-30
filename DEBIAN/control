@@ -1,0 +1,27 @@
+Package: i2p-emulator
+Version: 1.0.0
+Architecture: all
+Maintainer: I2P Emulator Project <i2p-emulator@localhost>
+Installed-Size: 1100
+Depends: python3 (>= 3.8), python3-pyqt5, python3-pip, openjdk-17-jre-headless | default-jre-headless, iproute2, psmisc, curl, wget, sudo, bash, unzip, expect
+Recommends: python3-pyqt5.qtwebengine
+Section: net
+Priority: optional
+Homepage: https://github.com/boutros-farah/i2p-emulator
+Description: I2P Testnet Emulator - Cyber Warfare Research Platform
+ A controlled desktop I2P testnet emulator for isolated deployment,
+ monitoring, measurement, churn testing, topology analysis, and
+ authoritative exact-hop validation.
+ .
+ Designed for cybersecurity researchers, law enforcement training, and
+ national security exercises. Provides a safe, isolated environment to
+ study how the Invisible Internet Project (I2P) operates — including
+ covert communication layers, command-and-control infrastructure, and
+ darknet eepsite behaviour — without touching live I2P infrastructure.
+ .
+ Features:
+  - Isolated I2P routers in Linux network namespaces
+  - Configurable multi-country topology with public-style IP emulation
+  - GUI-based deployment, churn testing, and measurement campaigns
+  - Phase 5 authoritative exact-hop truth pipeline
+  - Exportable datasets for academic and forensic reporting

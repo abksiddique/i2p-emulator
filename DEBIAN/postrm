@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+if command -v update-desktop-database &>/dev/null; then
+    update-desktop-database /usr/share/applications/ 2>/dev/null || true
+fi
+if command -v gtk-update-icon-cache &>/dev/null; then
+    gtk-update-icon-cache -f /usr/share/icons/hicolor/ 2>/dev/null || true
+fi
+
+echo "  i2p-emulator removed."
+echo "  Note: runtime data in ~/i2p-emulator-data/, ~/i2p-gui/, and ~/i2p-testnet-*"
+echo "  directories has been left in place. Remove them manually if no longer needed."
+
+exit 0
