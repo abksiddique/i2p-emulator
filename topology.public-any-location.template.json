@@ -1,0 +1,77 @@
+{
+  "version": 2,
+  "addressing": {
+    "mode": "public-any-location",
+    "allocator": "location-public-any-builder-defaults",
+    "strict": true,
+    "acknowledge_unassigned_public_ip_risk": true,
+    "stocklike_subnet_16_diversity": true,
+    "location_pools": {
+      "LB": [
+        "45.0.0.0/12"
+      ],
+      "DE": [
+        "91.80.0.0/12"
+      ],
+      "FR": [
+        "185.16.0.0/12"
+      ]
+    }
+  },
+  "locations": [
+    {
+      "country": "Lebanon",
+      "country_code": "LB",
+      "city": "Beirut",
+      "center": {
+        "lat": 33.8938,
+        "lon": 35.5018
+      },
+      "map_spread": 0.12,
+      "subnets": [
+        {
+          "label": "LB-1",
+          "cidr": "45.10.1.0/29",
+          "routers": 3,
+          "floodfill": 1
+        }
+      ]
+    },
+    {
+      "country": "Germany",
+      "country_code": "DE",
+      "city": "Berlin",
+      "center": {
+        "lat": 52.52,
+        "lon": 13.405
+      },
+      "map_spread": 0.12,
+      "subnets": [
+        {
+          "label": "DE-1",
+          "cidr": "91.80.1.0/29",
+          "routers": 2,
+          "floodfill": 1
+        }
+      ]
+    },
+    {
+      "country": "France",
+      "country_code": "FR",
+      "city": "Paris",
+      "center": {
+        "lat": 48.8566,
+        "lon": 2.3522
+      },
+      "map_spread": 0.12,
+      "subnets": [
+        {
+          "label": "FR-1",
+          "cidr": "185.20.1.0/29",
+          "routers": 2,
+          "floodfill": 0
+        }
+      ]
+    }
+  ]
+}
