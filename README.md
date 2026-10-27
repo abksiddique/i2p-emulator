@@ -86,7 +86,10 @@ See [REPRODUCE.md](REPRODUCE.md) for the exact steps and expected figures.
 
 ## Citation
 
-If you use this software, please cite:
+If you use this software, please cite the paper:
+
+Preprint: https://arxiv.org/abs/2610.34004
+DOI: https://doi.org/10.48550/arXiv.2610.34004
 
 ```bibtex
 @inproceedings{muntaka2026garlic,
@@ -95,7 +98,11 @@ If you use this software, please cite:
                Demerjian, Jacques},
   title     = {Garlic in a Box: {I2P} Network Emulator},
   booktitle = {Proc. Workshop on Cyber Security Experimentation and Test (CSET)},
-  year      = {2026}
+  year      = {2026},
+  note      = {Preprint: arXiv:2610.34004},
+  eprint    = {2610.34004},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CR}
 }
 ```
 
